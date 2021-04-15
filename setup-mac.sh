@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
 
-set -e
+# Default config for installation of packages
+brew=false
+scm_breeze=false
+node=false
+vscode=false
+docker=false
+vimrc=false
+iterm2=false
+ohmyzsh=false
+
+# load config for packages
+# shellcheck source=config.sh
+source "./config.sh"
 
 echo_green() {
     local message="$1"
     local green='\033[0;32m'
     local nc='\033[0m' # No Color
-    
+
     echo -e "${green}${message}${nc}"
 }
 
@@ -14,7 +26,7 @@ echo_red() {
     local message="$1"
     local green='\033[0;31m'
     local nc='\033[0m' # No Color
-    
+
     echo -e "${green}${message}${nc}"
 }
 
@@ -36,7 +48,7 @@ install_brew() {
     set +e
     brew -v && return
     set -e
-    
+
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     brew -v || show_error_and_exit "Brew install failed"
     echo_green "Brew installed successfully"
@@ -44,9 +56,9 @@ install_brew() {
 
 install_brew_packages() {
     local additional_packages=("$@")
-   
+
     brew install git jq vim
-    git --version || show_error_and_exit "Git install failed" 
+    git --version || show_error_and_exit "Git install failed"
     jq --version || show_error_and_exit "jq install failed"
     vim --version || show_error_and_exit "vim install failed"
 
@@ -67,10 +79,10 @@ install_vscode() {
 install_nvm_and_node() {
     latest_tag="$(curl -sSL https://api.github.com/repos/nvm-sh/nvm/tags | jq '.[0].name' | tr -d '"')"
     curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/$latest_tag/install.sh" | bash
-    
+
     # shellcheck disable=SC1090
     source "$HOME/.nvm/nvm.sh"
-    
+
     nvm -v || show_error_and_exit "nvm install failed"
     nvm install stable
     echo "nvm and stable Node.js installed successfully"
@@ -115,7 +127,7 @@ This command sets up Mac machine by installing:
 - iTerm2
 - OhMyZsh and Scm Breeze
 
-additional-brew-packages: 
+additional-brew-packages:
 
     List of additional packages to be installed (Default: git jq vim)
 
@@ -128,19 +140,22 @@ main() {
 
     echo_red "Make sure to run post-setup-mac.sh after this"
     sleep 1
-    
-    local additional_brew_packages=("${@:1}") 
-    
+
     check_create_shell_profile
-    install_brew
-    install_brew_packages "${additional_brew_packages[@]}"
-    install_scm_breeze
-    install_nvm_and_node
-    install_vscode
-    install_docker
-    install_vimrc
-    install_iterm
-    install_ohmyzsh
+
+    if [[ "$brew" == true ]]; then
+        local additional_brew_packages=("${@:1}")
+        install_brew
+        install_brew_packages "${additional_brew_packages[@]}"
+    fi
+
+    [[ "$scm_breeze" == true ]] && install_scm_breeze
+    [[ "$node" == true ]] && install_nvm_and_node
+    [[ "$vscode" == true ]] && install_vscode
+    [[ "$docker" == true ]] && install_docker
+    [[ "$vimrc" == true ]] && install_vimrc
+    [[ "$iterm2" == true ]] && install_iterm
+    [[ "$ohmyzsh"  == true ]] && install_ohmyzsh
 }
 
 main "$@"
