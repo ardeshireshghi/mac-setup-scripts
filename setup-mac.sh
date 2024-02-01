@@ -10,6 +10,8 @@ vimrc=false
 iterm2=false
 ohmyzsh=false
 
+shell_path=""
+
 # load config for packages
 # shellcheck source=config.sh
 source "./config.sh"
@@ -36,11 +38,17 @@ show_error_and_exit() {
 }
 
 check_create_shell_profile() {
-    if [[ "$SHELL" == "/bin/zsh" ]]  &&  [[ ! -f $HOME/.zshrc ]]; then
+    if [[ "$SHELL" == "/bin/zsh" ]]; then
+      if [[ ! -f $HOME/.zshrc ]]; then
         touch ~/.zshrc
-    elif [[ "$SHELL" == "/bin/bash" ]] && [[ ! -f $HOME/.bash_profile ]]; then
-        touch ~/.bashrc
-        echo "[ -r ~/.bashrc ] && . ~/.bashrc" > ~/.bash_profile
+      fi
+      shell_path="$HOME/.zshrc"
+    elif [[ "$SHELL" == "/bin/bash" ]]; then
+        if [[ ! -f $HOME/.bash_profile ]]; then
+          touch ~/.bashrc
+          echo "[ -r ~/.bashrc ] && . ~/.bashrc" > ~/.bash_profile
+        fi
+        shell_path="$HOME/.bashrc"
     fi
 }
 
@@ -50,6 +58,10 @@ install_brew() {
     set -e
 
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo $HOME
+    echo "Adding brew settings to shell path: $shell_path"
+    (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> $shell_path
+    eval "$(/opt/homebrew/bin/brew shellenv)"
     brew -v || show_error_and_exit "Brew install failed"
     echo_green "Brew installed successfully"
 }
@@ -89,6 +101,9 @@ install_nvm_and_node() {
 }
 
 install_docker() {
+    echo "Checking Docker is installed"
+    docker -v && return
+
     brew install --cask docker
 }
 
