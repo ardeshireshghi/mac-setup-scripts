@@ -123,8 +123,34 @@ install_ohmyzsh() {
 }
 
 install_scm_breeze() {
-    git clone git://github.com/scmbreeze/scm_breeze.git ~/.scm_breeze
+    rm -rf ~/.scm_breeze
+    git clone https://github.com/scmbreeze/scm_breeze.git ~/.scm_breeze
     ~/.scm_breeze/install.sh
+}
+
+setup_ssh() {
+  mkdir -p "$HOME/.ssh"
+  local ssh_key_name="$HOME/.ssh/git-$USER"
+  echo "Checking for ssh key name: $ssh_key_name"
+
+  if [[ -f "$ssh_key_name" ]]; then
+    return
+  fi
+
+  # Creates a new ssh key
+  ssh-keygen -f "$ssh_key_name" -t ecdsa -b 521 -N ""
+  read -p "Enter the Github or Gitlab host name: " git_host
+  tee "$HOME/.ssh/config" <<EOF
+Host $git_host
+  PreferredAuthentications publickey
+  IdentityFile $ssh_key_name
+EOF
+
+
+  echo "Git config file created, add the below public key to SSH settings in Github or Gitlab:"
+  echo ""
+  cat "$ssh_key_name.pub"
+  echo ""
 }
 
 show_usage() {
@@ -142,7 +168,11 @@ This command sets up Mac machine by installing:
 - iTerm2
 - OhMyZsh and Scm Breeze
 
-additional-brew-packages:
+It also setup SSH and GPG keys and configuration for VC (Github or Gitlab)
+
+Optional arguments:
+
+[...additional-brew-packages]:
 
     List of additional packages to be installed (Default: git jq vim)
 
@@ -171,6 +201,10 @@ main() {
     [[ "$vimrc" == true ]] && install_vimrc
     [[ "$iterm2" == true ]] && install_iterm
     [[ "$ohmyzsh"  == true ]] && install_ohmyzsh
+
+    setup_ssh
+
+    echo "Setup completed, open iterm2 and continue there"
 }
 
 main "$@"
