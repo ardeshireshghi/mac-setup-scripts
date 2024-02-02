@@ -147,9 +147,9 @@ Host $git_host
 EOF
 
 
-  echo "Git config file created, add the below public key to SSH settings in Github or Gitlab:"
+  echo "Git config file created! Also the SSH public key is copied to the clipboard. Add the public key to SSH settings in Github or Gitlab:"
   echo ""
-  cat "$ssh_key_name.pub"
+  cat "$ssh_key_name.pub" | pbcopy
   echo ""
 }
 
